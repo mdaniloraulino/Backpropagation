@@ -11,7 +11,7 @@ outputDictionary = {'0':[1,0,0,0,0,0,0,0,0,0], '1':[0,2,0,0,0,0,0,0,0,0],
 learningRate = 0.2
 middleLayerSize = 100
 outputSize = 10
-inputSize = 11
+inputSize = 784
 
 v = np.random.uniform(-1.00, 1.00,(inputSize, middleLayerSize)) # [linhas, middleLayerSize]
 w = np.random.uniform(-1.00, 1.00,(middleLayerSize, outputSize)) # [middleLayerSize, outputSize]
@@ -19,6 +19,7 @@ errors = []
 
 inputCsv = pd.read_csv('a.csv')
 inputData = []
+inputNumber = []
 
 # Functions
 def prepareData():
@@ -28,6 +29,8 @@ def prepareData():
         for i in range(len(arrRow)):
             if(i != 0):
                 arrRow[i] = float(arrRow[i]) / 255
+        
+        inputNumber.append(arrRow.pop(0))
             
         inputData.append(arrRow)
     
@@ -38,10 +41,11 @@ def train(maxEpochs):
 
     for epoch in range(maxEpochs):
         errorCount = 0
-        print('Period ' + str(epoch))
+        print('Period ' + str(epoch + 1))
         
-        for row in inputData:
-            expectedNumber = row.pop(0)
+        for i in range(len(inputData)):
+            row = inputData[i]
+            expectedNumber = inputNumber[i]
             expectedNumberObj = outputDictionary[str(expectedNumber)]
             zIn = calcZIn(row)
             zOutput = calcDelta(zIn, middleLayerSize)
@@ -57,7 +61,7 @@ def train(maxEpochs):
                 propagateError(expectedNumberObj, row, yOutput, zOutput, zIn, yIn)
                 
         errors.append(errorCount)
-        print(errorCount)
+        print('Error: ' + str(errorCount))
 
 def calcZIn(row): 
     result = []
@@ -151,4 +155,4 @@ def updateWeight(weight, delta, lenght1, length2):
 # Execution
     
 prepareData()
-train(1)
+train(200)
