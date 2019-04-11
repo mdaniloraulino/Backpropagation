@@ -22,31 +22,17 @@ try:
     os.mkdir("epocas")
 except:
     print("ja existe esta pasta")
-    
-##### IMPORTAR E EXPORTAR PESOS
-def export_weights(filenameV,filenameW):
-    if (not os.path.exists(fV) and not os.path.exists(fW)):
-        exW = pd.DataFrame(w)
-        exV = pd.DataFrame(v)
-        exW.to_csv('WCSV.csv', index = False, header = False)
-        exV.to_csv('VCSV.csv', index = False, header = False) 
-        
-def import_weights():
-    global v, w
-    recV = pd.read_csv('VCSV.csv',sep=',',header = None,dtype=float)
-    recW = pd.read_csv('WCSV.csv',sep=',',header = None,dtype=float)
-    v = recV.values
-    w = recW.values
-####
 
-learningRate = 0.2
+learningRate = 0.5
 middleLayerSize = 100
 outputSize = 10
 inputSize = 784
 graphData = np.array([[0,100]])
 
+
 v = np.random.randn(28*28, middleLayerSize) / np.sqrt(28*28) # np.random.uniform(-1.00, 1.00,(inputSize, middleLayerSize)) # [linhas, middleLayerSize]
 w = np.random.randn(middleLayerSize, outputSize) / np.sqrt(middleLayerSize) #np.random.uniform(-1.00, 1.00,(middleLayerSize, outputSize)) # [middleLayerSize, outputSize]
+
 
 errors = []
 
@@ -180,7 +166,7 @@ def sumDelta(error, weights, lenght1, length2):
 
 def saveWeigthsToCsv():
     pd.DataFrame(w).to_csv(r"wWweigths.csv")
-    pd.DataFrame(w).to_csv(r"vWeigths.csv")
+    pd.DataFrame(v).to_csv(r"vWeigths.csv")
 
 #Funções Graficas
 def saveGraph(epoca,linha):
@@ -192,7 +178,7 @@ def saveGraph(epoca,linha):
     
 def saveGraphEpoch(epoca):
     fig2 = plt.figure(figsize=(10,6))
-    ax2 = fig2.add_subplot(1,1,1, title='Erro por épocas', xLabel='epocas',yLabel='porcentagem de erro')
+    ax2 = fig2.add_subplot(1,1,1, title='Erro por épocas', xLabel='epocas',yLabel='Erros')
     ax2.plot(np.arange(epoca),errors)
     fig2.savefig(r"epocas\geralEpocas.png")
     plt.close(fig2)
