@@ -22,6 +22,22 @@ try:
     os.mkdir("epocas")
 except:
     print("ja existe esta pasta")
+    
+##### IMPORTAR E EXPORTAR PESOS
+def export_weights(filenameV,filenameW):
+    if (not os.path.exists(fV) and not os.path.exists(fW)):
+        exW = pd.DataFrame(w)
+        exV = pd.DataFrame(v)
+        exW.to_csv('WCSV.csv', index = False, header = False)
+        exV.to_csv('VCSV.csv', index = False, header = False) 
+        
+def import_weights():
+    global v, w
+    recV = pd.read_csv('VCSV.csv',sep=',',header = None,dtype=float)
+    recW = pd.read_csv('WCSV.csv',sep=',',header = None,dtype=float)
+    v = recV.values
+    w = recW.values
+####
 
 learningRate = 0.2
 middleLayerSize = 100
