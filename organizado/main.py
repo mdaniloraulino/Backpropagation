@@ -15,10 +15,8 @@ outputDictionary = {'0':[1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0], '1':[0.0,1.0,
                 '5':[0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0], '6':[0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0], '7':[0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0], 
                 '8':[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0], '9':[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0] }
 #Grafico
-fig = plt.figure(figsize=(20,4))
-ax1 = fig.add_subplot(1,1,1, title='Porcentagem de Erros por linha', xLabel='Linhas',yLabel='Porcentagem de Erro', yLim=[0,100])
-fig2 = plt.figure(figsize=(20,4))
-ax2 = fig2.add_subplot(1,1,1, title='Erro por épocas', xLabel='epocas',yLabel='porcentagem de erro', yLim=[0,100])
+
+
 
 learningRate = 0.2
 middleLayerSize = 100
@@ -36,7 +34,7 @@ def prepareData():
     for row in inputCsv.itertuples(index=False):
         arrRow = list(row)
         inputNumber.append(arrRow.pop(0))
-        arrRow = np.array(arrRow) / 255
+        arrRow = np.array(arrRow)
         inputData.append(arrRow)
         
 def train(maxEpochs, train = False):
@@ -157,14 +155,16 @@ def saveWeigthsToCsv():
 
 #Funções Graficas
 def saveGraph(epoca,linha):
-    ax1.clear()
+    fig = plt.figure(figsize=(10,6))
+    ax1 = fig.add_subplot(1,1,1, title='Porcentagem de Erros por linha', xLabel='Linhas',yLabel='Porcentagem de Erro', yLim=[0,100])
     ax1.plot(graphData[:,0],graphData[:,1])
-    fig.savefig(r"c:\Users\Danilo\Trabalho Max\epocas\epoca {0} linha {1}.png".format(epoca,linha))
+    fig.savefig(r"C:\Users\Danilo\Max\NaoNormalizado\epocas\epoca {0} linha {1}.png".format(epoca,linha))
     
 def saveGraphEpoch(epoca):
-    ax2.clear()
+    fig2 = plt.figure(figsize=(10,6))
+    ax2 = fig2.add_subplot(1,1,1, title='Erro por épocas', xLabel='epocas',yLabel='porcentagem de erro')
     ax2.plot(np.arange(epoca),errors)
-    fig2.savefig(r"c:\Users\Danilo\Trabalho Max\epocas\geralEpocas.png")
+    fig2.savefig(r"C:\Users\Danilo\Max\NaoNormalizado\epocas\geralEpocas.png")
 
 prepareData()
 #(Epocas, treino = true)
