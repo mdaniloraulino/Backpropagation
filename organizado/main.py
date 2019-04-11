@@ -1,109 +1,112 @@
 import pandas as pd
 import numpy as np
-from numba import vectorize,jit
+import matplotlib.pyplot as plt
 
 #leitura de csv e inicio das variaveis
 inputCsv = pd.read_csv('mnist_train.csv')
 inputData = []
 inputNumber = []
 
-import pandas as pd
-import numpy as np
+
 
 # Global variables
 outputDictionary = {'0':[1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0], '1':[0.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
                 '2':[0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0], '3':[0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0], '4':[0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0], 
                 '5':[0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0], '6':[0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0], '7':[0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0], 
                 '8':[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0], '9':[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0] }
+#Grafico
+fig = plt.figure(figsize=(20,4))
+ax1 = fig.add_subplot(1,1,1, title='Porcentagem de Erros por linha', xLabel='Linhas',yLabel='Porcentagem de Erro', yLim=[0,100])
+fig2 = plt.figure(figsize=(20,4))
+ax2 = fig2.add_subplot(1,1,1, title='Erro por épocas', xLabel='epocas',yLabel='porcentagem de erro', yLim=[0,100])
 
 learningRate = 0.2
 middleLayerSize = 100
 outputSize = 10
 inputSize = 784
+graphData = np.array([[0,100]])
 
 v = np.random.randn(28*28, middleLayerSize) / np.sqrt(28*28) # np.random.uniform(-1.00, 1.00,(inputSize, middleLayerSize)) # [linhas, middleLayerSize]
-w = np.random.randn(middleLayerSize, inputSize) / np.sqrt(middleLayerSize) #np.random.uniform(-1.00, 1.00,(middleLayerSize, outputSize)) # [middleLayerSize, outputSize]
+w = np.random.randn(middleLayerSize, outputSize) / np.sqrt(middleLayerSize) #np.random.uniform(-1.00, 1.00,(middleLayerSize, outputSize)) # [middleLayerSize, outputSize]
+
 errors = []
 
-
-# Functions
 def prepareData():
     i = 1
     for row in inputCsv.itertuples(index=False):
         arrRow = list(row)
         inputNumber.append(arrRow.pop(0))
-        arrRow = np.array(arrRow)
+        arrRow = np.array(arrRow) / 255
         inputData.append(arrRow)
-    
-def train(maxEpochs):
+        
+def train(maxEpochs, train = False):
     global errors
     global graph
     global inputData
-
+    global graphData
     for epoch in range(maxEpochs):
         errorCount = 0
         print('Period ' + str(epoch + 1))
-        
+        graphData = np.array([[0,100]])
         for i in range(len(inputData)):
             row = inputData[i]
             expectedNumber = inputNumber[i]
-            expectedNumberObj = outputDictionary[str(expectedNumber)]
-            zIn = calcZIn(row)
-            zOutput = calcDelta(zIn, middleLayerSize)
-            yIn = calcYIn(zOutput)
-    
-            yOutput = calcDelta(yIn, outputSize)
+            expectedNumberObj = np.array(outputDictionary[str(expectedNumber)])
+            zIn = calcZIn(np.array(row))
+            zOutput = calcDelta(np.array(zIn), middleLayerSize)
+            yIn = calcYIn(zOutput)  
+            yOutput = calcDelta(yIn, outputSize)  
             validate = validadeOutput(expectedNumberObj, yOutput)
-            
+            if i != 0 and i % 1000 == 0:
+                graphData = np.append(graphData,[[i,(errorCount / i * 100)]],axis=0)
+            if i != 0 and i % 30000 == 0:   
+                saveGraph(epoch,i)
+                print(f'last Target: {expectedNumberObj} \nlast output: {yOutput}')
+                print(f'{i} linhas da epoca {epoch}, Erros até aqui {errorCount}')
+                print(f'pct Acerto {100 - (errorCount / i) * 100}')
+                break
             if(validate == False):
                 errorCount+= 1;
-                propagateError(expectedNumberObj, row, yOutput, zOutput, zIn, yIn)
-            if i % 1000 == 0:
-                print(f'{i} linhas da epoca {epoch}, Erros até aqui {errorCount}')
+                if train:
+                    propagateError(expectedNumberObj, row, yOutput, zOutput, zIn, yIn)
         errors.append(errorCount)
+        saveGraphEpoch(epoch + 1)
+        saveWeigthsToCsv()
         print('Error: ' + str(errorCount))
 
+
 def calcZIn(row): 
-    result = []
-    
+    result = np.zeros(len(row)) 
     for j in range(middleLayerSize):
-        result.append(0)
-        for i in range(inputSize):
-            result[j] += v[i,j] * row[i]
-    
+        result[j] = np.sum(np.dot(row , np.array(v[:,j])))
     return result
 
 def calcYIn(zOutput): 
-    result = []
+    result = np.zeros(len(zOutput))
     for j in range(outputSize):
-        result.append(0)
-        for i in range(middleLayerSize):
-            result[j] += w[i,j] * zOutput[i]
-    
+        result[j] = np.sum(np.dot(zOutput, np.array(w[:,j])))
     return result
 
-
 def calcDelta(arr, arrSize):
-    deltas = []
-    
+    deltas = np.zeros(arrSize)
     for i in range(arrSize):
-        deltas.append(activationFunction(arr[i]))
-        
+        deltas[i] = (activationFunction(arr[i]))
     return deltas
 
 def activationFunction(x):
-    #r = (2 / 1 + (np.exp(-x))) -1 
-    r = 1.0 / (1.0 + np.exp(-x))
-    return r
+    return 1.0 / (1.0 + np.exp(-x))
 
 def validadeOutput(targetObj, yOutput):
-    for i in range(len(yOutput)):
-        if(targetObj[i] != yOutput[i]):
-            return False
-    
-    return True
+    indTar = np.unravel_index(np.argmax(targetObj, axis=None), targetObj.shape)
+    indOut = np.unravel_index(np.argmax(yOutput, axis=None), yOutput.shape)
+    if (indTar == indOut):
+        return True
+    else :
+        return False
 
 def propagateError(expectedArr, row, yOutput, zOutput, zIn, yIn):
+    global v
+    global w
     errorY = calcError(expectedArr, yOutput, yIn, outputSize)
     errorW = calcWeightCorrection(errorY, zOutput, middleLayerSize, outputSize)
     
@@ -111,53 +114,58 @@ def propagateError(expectedArr, row, yOutput, zOutput, zIn, yIn):
     errorZ = calcErrorZ(sumError, zOutput, zIn, middleLayerSize)
     errorV = calcWeightCorrection(errorZ, row, inputSize, middleLayerSize)
     
-    updateWeight(w, errorW, middleLayerSize, outputSize)
-    updateWeight(v, errorV, inputSize, middleLayerSize)
+    #Atualiza Peso
+    w = np.add(w,errorW)
+    v = np.add(v,errorV)
     
 
 def calcError(expectedArr, outputArr, inArr, size):
-    error = []
-    
+    error = np.zeros(size)
     for i in range(size):
-        error.append((expectedArr[i] - outputArr[i]) * (outputArr[i] * (1.0 - outputArr[i]))) # (0.5 * ((1 + inArr[i]) * (1 - inArr[i])))) 
+        error[i] = (((expectedArr[i] - outputArr[i]) * (outputArr[i] * (1.0 - outputArr[i]))))
     return error
 
 def calcErrorZ(expectedArr, outputArr, inArr, size):
-    error = []
+    error = np.zeros(size)
     for i in range(size):
-        error.append((expectedArr[i] * (1.0 - outputArr[i]))) # (0.5 * ((1 + inArr[i]) * (1 - inArr[i])))) ;
+        error[i] = expectedArr[i] * (outputArr[i] * (1.0 - outputArr[i]))
     return error
 
+
 def calcWeightCorrection(error, output, lenght1, length2):
-    delta = [];
-    for i in range(lenght1):
-        delta.append([])
-        for j in range(length2):
-            delta[i].append(learningRate * error[j] * output[i])
-    
-    return delta
+    delta = np.array([[0]*lenght1])
+    first = True
+    for i in range(length2):
+        if first:
+            delta[i] = learningRate * (output * error[i])
+            first = False
+        else:
+            delta = np.append(delta,np.array([(learningRate * output * error[i])]),axis=0)
+    return delta.T
 
 def sumDelta(error, weights, lenght1, length2):
-    delta = []
-    
-    for i in range(lenght1):
-        deltaValue = 0.0
+    delta = np.zeros(lenght1);
+    for i in range(lenght1):    
         for j in range(length2):
-            deltaValue += error[j] * weights[i][j];
-            
-        delta.append(deltaValue)
+            delta[i] += error[j] * weights[i][j];
     
     return delta
 
-def updateWeight(weight, delta, lenght1, length2):
-    # (lenght1)
-    # print(length2)
-    for i in range(lenght1):
-        for j in range(length2):
-            # print(str(i) + ' - ' + str(j))
-            weight[i][j] += delta[i][j]
-    
+def saveWeigthsToCsv():
+    pd.DataFrame(w).to_csv(r"wWweigths.csv")
+    pd.DataFrame(w).to_csv(r"vWeigths.csv")
 
-# Execution
+#Funções Graficas
+def saveGraph(epoca,linha):
+    ax1.clear()
+    ax1.plot(graphData[:,0],graphData[:,1])
+    fig.savefig(r"c:\Users\Danilo\Trabalho Max\epocas\epoca {0} linha {1}.png".format(epoca,linha))
+    
+def saveGraphEpoch(epoca):
+    ax2.clear()
+    ax2.plot(np.arange(epoca),errors)
+    fig2.savefig(r"c:\Users\Danilo\Trabalho Max\epocas\geralEpocas.png")
+
 prepareData()
-train(200)
+#(Epocas, treino = true)
+train(200,True)
