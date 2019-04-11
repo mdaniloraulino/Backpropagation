@@ -159,13 +159,14 @@ def saveGraph(epoca,linha):
     ax1 = fig.add_subplot(1,1,1, title='Porcentagem de Erros por linha', xLabel='Linhas',yLabel='Porcentagem de Erro', yLim=[0,100])
     ax1.plot(graphData[:,0],graphData[:,1])
     fig.savefig(r"C:\Users\Danilo\Max\NaoNormalizado\epocas\epoca {0} linha {1}.png".format(epoca,linha))
-    
+    plt.close(fig)
 def saveGraphEpoch(epoca):
     fig2 = plt.figure(figsize=(10,6))
     ax2 = fig2.add_subplot(1,1,1, title='Erro por épocas', xLabel='epocas',yLabel='porcentagem de erro')
     ax2.plot(np.arange(epoca),errors)
     fig2.savefig(r"C:\Users\Danilo\Max\NaoNormalizado\epocas\geralEpocas.png")
-
+    plt.close(fig2)
+    
 prepareData()
 #(Epocas, treino = true)
 train(200,True)
